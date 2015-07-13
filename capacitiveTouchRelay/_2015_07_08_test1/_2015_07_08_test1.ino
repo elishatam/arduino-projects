@@ -1,25 +1,6 @@
 #include <CapacitiveSensor.h>
+/*Elisha's time spent:
 
-/* 
-// Pin 13 has an LED connected on most Arduino boards.
-// give it a name:
-int led = 13;
-
-// the setup routine runs once when you press reset:
-void setup() {                
-  // initialize the digital pin as an output.
-  pinMode(led, OUTPUT);     
-  Serial.begin(9600);
-}
-
-// the loop routine runs over and over again forever:
-void loop() {
-  Serial.print("Hi");
-  digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(1000);               // wait for a second
-  digitalWrite(led, LOW);    // turn the LED off by making the voltage LOW
-  delay(1000);               // wait for a second
-}
 */
 
 /*
@@ -45,17 +26,23 @@ void setup()
    pinMode(relayPin, OUTPUT);
    cs_4_2.set_CS_AutocaL_Millis(0xFFFFFFFF);     // turn off autocalibrate on channel 1 - just as an example
    Serial.begin(9600);
+   digitalWrite(relayPin, LOW); //set Relay to initially low
 
 }
 
 void loop()                    
 {
-  /*
+  
     long start = millis();
     long total1 =  cs_4_2.capacitiveSensor(30);
     //long total2 =  cs_4_5.capacitiveSensor(30);
     //long total3 =  cs_4_8.capacitiveSensor(30);
 
+    if (total1 > 200){
+      digitalWrite(relayPin, HIGH); //connect Relay
+    }
+    else digitalWrite(relayPin, LOW);
+    
     Serial.print(millis() - start);        // check on performance in milliseconds
     Serial.print("\t");                    // tab character for debug window spacing
 
@@ -66,12 +53,13 @@ void loop()
     //Serial.println(total3);                // print sensor output 3
 
     delay(100);                             // arbitrary delay to limit data to serial port 
-   */
+   
+   /*
    digitalWrite(relayPin, HIGH);
    Serial.println("hi");
    delay(1000);
    digitalWrite(relayPin, LOW);
    Serial.println("low");
    delay(1000);
-   
+   */
 }
