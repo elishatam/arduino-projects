@@ -3,7 +3,8 @@
  - 3 hrs researching different sensors - capacitive, pressure,
  - 4 hrs trying to get wireless way to activate capacitive sensor
  - 1 hr soldering and figuring
- - 10:30am - timing
+ - 1hr - timing, non blocking code
+ - 4:12
 */
 
 /*
@@ -25,6 +26,11 @@ CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);        // 10 megohm resistor 
 int relayPin = 7;
 unsigned long keyPrevMillis = 0;
 const unsigned long keySampleIntervalMs = 100;
+const unsigned long triggerCapacitanceAmount = 200;
+byte longKeyPressCountMax = 50;    // 50 * 100 = 5000 ms
+byte longKeyPressCount = 0;
+
+unsigned int prevKeyState = 0; //to start off, capacitive sensor state is 0, <200.
 
 void setup()                    
 {
@@ -38,12 +44,62 @@ void setup()
 
 }
 
+// called when button is kept pressed for less than 2 seconds
+void shortKeyPress() {
+    Serial.println("short");
+    digitalWrite(relayPin, LOW); //make sure relay is low and open
+}
+
+// called when button is kept pressed for more than 2 seconds
+void longKeyPress() {
+    Serial.println("long");
+    digitalWrite(relayPin, HIGH); //connect Relay
+}
+
+// called when key goes from not pressed to pressed
+void keyPress() {
+    Serial.print("key press");
+    longKeyPressCount = 0;
+}
+
+void keyRelease(){
+    Serial.println("key release");
+    
+    if (longKeyPressCount >= longKeyPressCountMax){
+      longKeyPress();
+    }
+    else {
+      shortKeyPress();
+    }
+  
+}
+
 void loop()                    
 {
     //Check capacitive sensor every 100ms (keySampleIntervalMs)
     if (millis() - keyPrevMillis >= keySampleIntervalMs){
       keyPrevMillis = millis();
       PORTB ^= B00100000; //Toggle LED to test Only toggles Bit 5 
+      
+      long currKeyState = cs_4_2.capacitiveSensor(30); //read Key state
+      if ((prevKeyState < triggerCapacitanceAmount) && (currKeyState > triggerCapacitanceAmount)){
+        keyPress();
+      }
+      else if ((prevKeyState > triggerCapacitanceAmount) && (currKeyState < triggerCapacitanceAmount)){
+        keyRelease();
+      }
+      else if (currKeyState > triggerCapacitanceAmount){
+        longKeyPressCount++;
+      }
+      
+      prevKeyState = currKeyState;
+      Serial.print(longKeyPressCount);
+      Serial.print("\t");                    // tab character for debug window spacing
+      Serial.println(currKeyState);                    
+
+    }
+      
+/*      
       long start = millis();
       long total1 = cs_4_2.capacitiveSensor(30);
       
@@ -55,7 +111,7 @@ void loop()
     Serial.print("\t");                    // tab character for debug window spacing
 
     Serial.println(total1);                  // print sensor output 1
- 
+ /*
     }
     
     /*
