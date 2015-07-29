@@ -1,0 +1,50 @@
+(ExpressProject "RelayBoard"
+  (ProjectVersion "19981106")
+  (ProjectType "PCB")
+  (Folder "Design Resources"
+    (Folder "Library"
+      (File "C:\Cadence\SPB_16.6\tools\capture\LIBRARY\Connector.olb"
+        (Type "Schematic Library"))
+      (File "C:\Cadence\SPB_16.6\tools\capture\LIBRARY\Counter.olb"
+        (Type "Schematic Library"))
+      (File "C:\Cadence\SPB_16.6\tools\capture\LIBRARY\Discrete.olb"
+        (Type "Schematic Library"))
+      (File "C:\Cadence\SPB_16.6\tools\capture\LIBRARY\Gate.olb"
+        (Type "Schematic Library"))
+      (File "C:\Cadence\SPB_16.6\tools\capture\LIBRARY\Transistor.olb"
+        (Type "Schematic Library"))
+      (File "..\library\pitlab.olb"
+        (Type "Schematic Library")))
+    (NoModify)
+    (File ".\relayboard.dsn"
+      (Type "Schematic Design"))
+    (BuildFileAddedOrDeleted "x")
+    (CompileFileAddedOrDeleted "x")
+    (DOCKED "TRUE")
+    (DOCKING_POSITION "59420"))
+  (Folder "Outputs")
+  (Folder "Referenced Projects")
+  (PartMRUSelector)
+  (GlobalState
+    (FileView
+      (Path "Design Resources")
+      (Path "Design Resources" "Library")
+      (Select "Design Resources"
+         "C:\USERS\ELISHA\PIT-LAB\ELECTRICAL ENGINEERING\M4Module\relayboard.dsn"))
+    (HierarchyView)
+    (Doc
+      (Type "COrCapturePMDoc")
+      (Frame
+        (Placement "44 0 1 -1 -1 -1 -1 0 250 0 1148"))
+      (Tab 0))
+    (Doc
+      (Type "COrSchematicDoc")
+      (Frame
+        (Placement "44 2 3 -1 -1 -9 -38 64 1249 64 726")
+        (Scroll "0 70")
+        (Zoom "100")
+        (Occurrence "/"))
+      (Path
+         "C:\USERS\ELISHA\PIT-LAB\ELECTRICAL ENGINEERING\M4MODULE\RELAYBOARD.DSN")
+      (Schematic "SCHEMATIC1")
+      (Page "PAGE1"))))
