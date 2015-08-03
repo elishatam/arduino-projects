@@ -26,9 +26,19 @@ CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);        // 10 megohm resistor 
 int relayPin = 7;
 unsigned long keyPrevMillis = 0;
 const unsigned long keySampleIntervalMs = 100;
-const unsigned long triggerCapacitanceAmount = 200;
+const unsigned long triggerCapacitanceAmount = 100;
+unsigned int triggerAmount;
 byte longKeyPressCountMax = 50;    // 50 * 100 = 5000 ms
 byte longKeyPressCount = 0;
+
+//Smoothing tutorial https://www.arduino.cc/en/Tutorial/Smoothing
+const int numReadings = 100;
+long firstReadings[numReadings];
+unsigned int index =0;
+unsigned int total = 0;
+unsigned int average = 0;
+unsigned int initializationPeriod = 0;
+
 
 unsigned int prevKeyState = 0; //to start off, capacitive sensor state is 0, <200.
 
@@ -37,6 +47,9 @@ void setup()
   //Debug
   DDRB = DDRB | B00100000; //Set Arduino pin 13 (LED) to output, rest to input
   //
+  for (int thisReading = 0; thisReading < numReadings; thisReading++)
+    firstReadings[thisReading] = 0;
+    
    pinMode(relayPin, OUTPUT);
    cs_4_2.set_CS_AutocaL_Millis(0xFFFFFFFF);     // turn off autocalibrate on channel 1 - just as an example
    Serial.begin(9600);
@@ -76,27 +89,55 @@ void keyRelease(){
 
 void loop()                    
 {
+    
     //Check capacitive sensor every 100ms (keySampleIntervalMs)
     if (millis() - keyPrevMillis >= keySampleIntervalMs){
       keyPrevMillis = millis();
       PORTB ^= B00100000; //Toggle LED to test Only toggles Bit 5 
       
-      long currKeyState = cs_4_2.capacitiveSensor(30); //read Key state
-      if ((prevKeyState < triggerCapacitanceAmount) && (currKeyState > triggerCapacitanceAmount)){
-        keyPress();
-      }
-      else if ((prevKeyState > triggerCapacitanceAmount) && (currKeyState < triggerCapacitanceAmount)){
-        keyRelease();
-      }
-      else if (currKeyState > triggerCapacitanceAmount){
-        longKeyPressCount++;
+      //Get average first reading during initialization time
+      if (initializationPeriod < 100){
+        total = total - firstReadings[index];
+          firstReadings[index] = cs_4_2.capacitiveSensor(30); //read Key state
+          Serial.print(firstReadings[index]);
+          total = total + firstReadings[index];
+          index = index + 1;
+          
+          if (index >= numReadings)
+            index = 0;
+            
+          average = total / numReadings;
+          initializationPeriod++;
+          //firstTimeToRead = 0;
+          //triggerAmount = average + triggerCapacitanceAmount;
+          Serial.print("\t");
+          Serial.println(average);
+      }       
+      else {
+        triggerAmount = average + triggerCapacitanceAmount;
+        long currKeyState = cs_4_2.capacitiveSensor(30); //read Key state
+        if ((prevKeyState < triggerAmount) && (currKeyState > triggerAmount)){
+          keyPress(); //Relative measurement. Capacitance amount has to be > prevKeyState by triggerCapacitiveAmount in order to trigger.
+        }
+        else if ((prevKeyState > triggerAmount) && (currKeyState < triggerAmount)){
+          keyRelease();
+        }
+        else if (currKeyState > triggerAmount){
+          longKeyPressCount++;
+        }
+        
+        prevKeyState = currKeyState;
+        Serial.print(average);
+        Serial.print("\t");
+        Serial.print(triggerAmount);
+        Serial.print("\t");
+        Serial.print(longKeyPressCount);
+        Serial.print("\t");                    // tab character for debug window spacing
+        Serial.println(currKeyState);                    
+
       }
       
-      prevKeyState = currKeyState;
-      Serial.print(longKeyPressCount);
-      Serial.print("\t");                    // tab character for debug window spacing
-      Serial.println(currKeyState);                    
-
+      
     }
       
 /*      
