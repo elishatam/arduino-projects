@@ -18,7 +18,9 @@
  
  //Pin 4 = Send pin, connect to 1M
  //Pin 2 = Receive pin, connect to 1k
-
+ //Relay
+ //     - After initialization, Pin 1 (red wire after fuse) and 3 (yellow wire) of Relay are not continuous. 
+ //     - After touching for 10sec, Pin 1 and 3 are continuous
 
 CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);        // 10 megohm resistor between pins 4 & 2, pin 2 is sensor pin, add wire, foil
 //CapacitiveSensor   cs_4_5 = CapacitiveSensor(4,5);        // 10 megohm resistor between pins 4 & 6, pin 6 is sensor pin, add wire, foil
@@ -28,7 +30,7 @@ unsigned long keyPrevMillis = 0;
 const unsigned long keySampleIntervalMs = 100;
 const unsigned long triggerCapacitanceAmount = 100;
 unsigned int triggerAmount;
-byte longKeyPressCountMax = 50;    // 50 * 100 = 5000 ms
+byte longKeyPressCountMax = 100;    // 100 (longkeyPressCountMax) * 100 (loops every 100ms) = 10,000ms
 byte longKeyPressCount = 0;
 
 //Smoothing tutorial https://www.arduino.cc/en/Tutorial/Smoothing
@@ -96,6 +98,7 @@ void loop()
       PORTB ^= B00100000; //Toggle LED to test Only toggles Bit 5 
       
       //Get average first reading during initialization time
+      //Initialization time = 10s (100 * 100ms = 10,000ms = 10s)
       if (initializationPeriod < 100){
         total = total - firstReadings[index];
           firstReadings[index] = cs_4_2.capacitiveSensor(30); //read Key state
@@ -112,7 +115,10 @@ void loop()
           //triggerAmount = average + triggerCapacitanceAmount;
           Serial.print("\t");
           Serial.println(average);
-      }       
+      }
+      //Now we know the average first reading. 
+      //Our triggerAmount will just be triggerCapacitanceAmount (100) above the average reading 
+      //If capacitive reading got above this triggerAmount, then we assume someone is touching the sensor     
       else {
         triggerAmount = average + triggerCapacitanceAmount;
         long currKeyState = cs_4_2.capacitiveSensor(30); //read Key state
