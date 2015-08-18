@@ -19,8 +19,10 @@
  //Pin 4 = Send pin, connect to 1M
  //Pin 2 = Receive pin, connect to 1k
  //Relay
- //     - After initialization, Pin 1 (red wire after fuse) and 3 (yellow wire) of Relay are not continuous. 
- //     - After touching for 10sec, Pin 1 and 3 are continuous
+ //     - digitalWrite(relayPin, LOW); = Pin 1 (red wire after fuse) and 3 (yellow wire) of Relay are not continuous. = Elisha assumes unlocked 
+ //     - digitalWrite(relayPin, HIGH); = Pin 1 (red wire after fuse) and 3 (yellow wire) of Relay are continuous. = Elisha assumes locked
+ //     - After initialization, HIGH = LOCK 
+ //     - After touching for 10sec, LOW = UNLOCK
 
 CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);        // 10 megohm resistor between pins 4 & 2, pin 2 is sensor pin, add wire, foil
 //CapacitiveSensor   cs_4_5 = CapacitiveSensor(4,5);        // 10 megohm resistor between pins 4 & 6, pin 6 is sensor pin, add wire, foil
@@ -28,7 +30,7 @@ CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);        // 10 megohm resistor 
 int relayPin = 7;
 unsigned long keyPrevMillis = 0;
 const unsigned long keySampleIntervalMs = 100;
-const unsigned long triggerCapacitanceAmount = 100;
+const unsigned long triggerCapacitanceAmount = 50;
 unsigned int triggerAmount;
 byte longKeyPressCountMax = 100;    // 100 (longkeyPressCountMax) * 100 (loops every 100ms) = 10,000ms
 byte longKeyPressCount = 0;
@@ -55,20 +57,20 @@ void setup()
    pinMode(relayPin, OUTPUT);
    cs_4_2.set_CS_AutocaL_Millis(0xFFFFFFFF);     // turn off autocalibrate on channel 1 - just as an example
    Serial.begin(9600);
-   digitalWrite(relayPin, LOW); //set Relay to initially low
+   digitalWrite(relayPin, HIGH); //set Relay to initially HIGH = lock
 
 }
 
 // called when button is kept pressed for less than 2 seconds
 void shortKeyPress() {
     Serial.println("short");
-    digitalWrite(relayPin, LOW); //make sure relay is low and open
+    digitalWrite(relayPin, HIGH); //make sure relay is high = lock
 }
 
 // called when button is kept pressed for more than 2 seconds
 void longKeyPress() {
     Serial.println("long");
-    digitalWrite(relayPin, HIGH); //connect Relay
+    digitalWrite(relayPin, LOW); //set Relay to low to unlock and disconnect Relay
 }
 
 // called when key goes from not pressed to pressed
