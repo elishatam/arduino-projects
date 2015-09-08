@@ -108,10 +108,24 @@ void loop() {
       Serial.print("\t");
       Serial.println(weight);
       //if (~isMatching(weight, targetWeight)){
-      if (!isMatching(weight, targetWeight)){
       //if (((weight - targetWeight) > 0.2)||((targetWeight - weight) > 0.2)){
+      //if (!isMatching(weight, targetWeight)){
+      //  myState = WAITINGFORPROPERWEIGHT;
+      //}
+
+      //Check to make sure weight does not match targetWeight for the holdTime
+      //If so, go to WAITINGFORPROPERWEIGHT state
+      matchingVal = isMatching(weight, targetWeight);
+      if (matchingVal == 0 && lastMatchingVal == 1){
+        matchingTime = millis();
+      }
+
+      if (matchingVal == 0 && lastMatchingVal == 0 && (millis() - matchingTime) > long(holdTime)){
         myState = WAITINGFORPROPERWEIGHT;
       }
+      lastMatchingVal = matchingVal;      
+
+      
       break;
 
     case WAITINGFORPROPERWEIGHT:
@@ -125,6 +139,8 @@ void loop() {
       //if (isMatching(weight, targetWeight)){
       //  myState = UNLOCK;
       //}
+      //Check to make sure weight matches targetWeight for the holdTime
+      //If so, UNLOCK 
       matchingVal = isMatching(weight, targetWeight);
       if (matchingVal == 1 && lastMatchingVal == 0){
         matchingTime = millis();
@@ -147,6 +163,8 @@ void loop() {
       //if (!isMatching(weight, targetWeight)){
       //  myState = WAITINGFORPROPERWEIGHT;
       //}
+      //Check to make sure weight does not match targetWeight for the holdTime. 
+      //If so, go to WAITINGFORPROPERWEIGHT state
       matchingVal = isMatching(weight, targetWeight);
       if (matchingVal == 0 && lastMatchingVal == 1){
         matchingTime = millis();
@@ -162,12 +180,29 @@ void loop() {
 }
 
 int isMatching(float weight, float targetWeight){
-  unsigned long currentMillis = millis();
   if (abs(weight-targetWeight) < 0.02){  //it matches
     return 1;
   }
   return 0;  
 }
+
+/*
+int isMatchingForEnoughTime(float weight, float targetWeight){
+  if (abs(weight-targetWeight) < 0.02){  //it matches
+    matchingVal = 1;
+  }
+  else matchingVal = 0;
+  
+  if (matchingVal == 1 && lastMatchingVal == !matchingVal){
+    matchingTime = millis();
+  }
+
+  if (matchingVal == 1 && lastMatchingVal == matchingVal && (millis() - matchingTime) > long(holdTime)){
+    myState = UNLOCK;
+  }
+  lastMatchingVal = matchingVal;
+}
+*/
 
 void unlock(void){
   digitalWrite(arduinoLEDPin, HIGH);
