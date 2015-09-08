@@ -12,6 +12,7 @@
 //Internal eeprom: http://tronixstuff.com/2011/03/16/tutorial-your-arduinos-inbuilt-eeprom/
 //Smoothing: https://www.arduino.cc/en/Tutorial/Smoothing
 //Running Average Library: http://playground.arduino.cc/Main/RunningAverage
+//Hold time: http://jmsarduino.blogspot.com/2009/05/click-for-press-and-hold-for-b.html
 
 typedef enum { FIRSTSTATE,
                SETTARGETWEIGHT,
@@ -27,6 +28,7 @@ typedef enum { FIRSTSTATE,
 
 const int buttonPin = 7;
 const int ledPin = 6;
+const int relayPin = A0;
 const int arduinoLEDPin = 13;
 const unsigned long ledIntervalMs = 500;
 
@@ -48,8 +50,10 @@ void setup() {
   pinMode(buttonPin, INPUT);
   pinMode(ledPin, OUTPUT);
   pinMode(arduinoLEDPin, OUTPUT);
+  pinMode(relayPin, OUTPUT);
   digitalWrite(ledPin, LOW);
   digitalWrite(arduinoLEDPin, LOW);
+  digitalWrite(relayPin, HIGH); //set Relay to initially HIGH = lock
   Serial.begin(9600);
 
   //Read the state of the last pushbutton
@@ -206,10 +210,12 @@ int isMatchingForEnoughTime(float weight, float targetWeight){
 
 void unlock(void){
   digitalWrite(arduinoLEDPin, HIGH);
+  digitalWrite(relayPin, LOW); //set Relay to LOW = unlock
 }
 
 void lock(void){
   digitalWrite(arduinoLEDPin, LOW);
+  digitalWrite(relayPin, HIGH); //set Relay to HIGH = lock
 }
 /*  //read the state of the pushbutton
   buttonState = digitalRead(buttonPin);
