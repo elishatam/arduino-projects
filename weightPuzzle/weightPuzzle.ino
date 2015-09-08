@@ -22,8 +22,8 @@ typedef enum { FIRSTSTATE,
 } STATE_t;
 
 #define calibration_factor 210000.0 //This value is obtained using the SparkFun_HX711_Calibration sketch
-#define DOUT 3 //Define pin number for DOUT of weight sensor
-#define CLK 2  //Define pin number for CLK of weight sensor
+#define DOUT_ONE 3 //Define pin number for DOUT of weight sensor
+#define CLK_ONE 2  //Define pin number for CLK of weight sensor
 #define holdTime 700 // ms hold period: how long to wait for press+hold event
 
 const int buttonPin = 7;
@@ -37,12 +37,13 @@ int currentButtonState = 0;
 int lastButtonState = 0;
 unsigned long ledPrevMillis = 0;
 unsigned long buttonPrevMillis = 0;
-float targetWeight = 0;
+float targetWeightOne = 0;
+float weightOne;
 int matchingVal = 0;
 int lastMatchingVal = 0;
 unsigned long matchingTime;
 
-HX711 scale(DOUT, CLK);
+HX711 scaleOne(DOUT_ONE, CLK_ONE);
 STATE_t myState; //Current state
 STATE_t dummyState; //Used to prevent switching states within one while loop iteration
 
@@ -58,13 +59,12 @@ void setup() {
 
   //Read the state of the last pushbutton
   lastButtonState = digitalRead(buttonPin);
-  scale.set_scale(calibration_factor); //This value is obtained by using the SparkFun_HX711_Calibration sketch
-  scale.tare(); //Assuming there is no weight on the scale at start up, reset the scale to 0
+  scaleOne.set_scale(calibration_factor); //This value is obtained by using the SparkFun_HX711_Calibration sketch
+  scaleOne.tare(); //Assuming there is no weight on the scale at start up, reset the scale to 0
   myState = FIRSTSTATE;
 }
 
 void loop() {
-  float weight;
   unsigned long currentMillis;
   
   dummyState = myState; 
@@ -73,7 +73,7 @@ void loop() {
     case FIRSTSTATE:
       //Read the state of the pushbutton
       currentButtonState = digitalRead(buttonPin);  
-      Serial.print(scale.get_offset());
+      Serial.print(scaleOne.get_offset());
       Serial.print("\t");
       Serial.println(currentButtonState);
       if ((currentButtonState) == 0 && (lastButtonState == 1)){ //Falling edge. When pressed, buttonState = 0
@@ -90,8 +90,8 @@ void loop() {
         ledPrevMillis = currentMillis;
         DDRD ^= B01000000; //Toggle ledPin
       }
-      targetWeight = scale.get_units(); //in lbs
-      Serial.println(targetWeight, 2);
+      targetWeightOne = scaleOne.get_units(); //in lbs
+      Serial.println(targetWeightOne, 2);
       currentButtonState = digitalRead(buttonPin); 
 
       //Wait before reading button again
@@ -107,10 +107,10 @@ void loop() {
       Serial.print("WAITINGFORWEIGHTREMOVAL");
       Serial.print("\t");
       digitalWrite(ledPin, LOW); //Make sure LED is off
-      weight = scale.get_units();
-      Serial.print(targetWeight);
+      readWeights();
+      Serial.print(targetWeightOne);
       Serial.print("\t");
-      Serial.println(weight);
+      Serial.println(weightOne);
       //if (~isMatching(weight, targetWeight)){
       //if (((weight - targetWeight) > 0.2)||((targetWeight - weight) > 0.2)){
       //if (!isMatching(weight, targetWeight)){
@@ -119,7 +119,7 @@ void loop() {
 
       //Check to make sure weight does not match targetWeight for the holdTime
       //If so, go to WAITINGFORPROPERWEIGHT state
-      matchingVal = isMatching(weight, targetWeight);
+      matchingVal = isMatching(weightOne, targetWeightOne);
       if (matchingVal == 0 && lastMatchingVal == 1){
         matchingTime = millis();
       }
@@ -136,16 +136,16 @@ void loop() {
       Serial.print("WAITINGFORPROPERWEIGHT");
       Serial.print("\t");
       lock();
-      weight = scale.get_units();
-      Serial.print(targetWeight);
+      readWeights();
+      Serial.print(targetWeightOne);
       Serial.print("\t");
-      Serial.println(weight);      
+      Serial.println(weightOne);      
       //if (isMatching(weight, targetWeight)){
       //  myState = UNLOCK;
       //}
       //Check to make sure weight matches targetWeight for the holdTime
       //If so, UNLOCK 
-      matchingVal = isMatching(weight, targetWeight);
+      matchingVal = isMatching(weightOne, targetWeightOne);
       if (matchingVal == 1 && lastMatchingVal == 0){
         matchingTime = millis();
       }
@@ -160,16 +160,16 @@ void loop() {
       Serial.print("UNLOCK");
       Serial.print("\t");
       unlock();
-      weight = scale.get_units();
-      Serial.print(targetWeight);
+      readWeights();
+      Serial.print(targetWeightOne);
       Serial.print("\t");
-      Serial.println(weight);      
+      Serial.println(weightOne);      
       //if (!isMatching(weight, targetWeight)){
       //  myState = WAITINGFORPROPERWEIGHT;
       //}
       //Check to make sure weight does not match targetWeight for the holdTime. 
       //If so, go to WAITINGFORPROPERWEIGHT state
-      matchingVal = isMatching(weight, targetWeight);
+      matchingVal = isMatching(weightOne, targetWeightOne);
       if (matchingVal == 0 && lastMatchingVal == 1){
         matchingTime = millis();
       }
@@ -183,8 +183,8 @@ void loop() {
   
 }
 
-int isMatching(float weight, float targetWeight){
-  if (abs(weight-targetWeight) < 0.02){  //it matches
+int isMatching(float weightOne, float targetWeightOne){
+  if (abs(weightOne-targetWeightOne) < 0.02){  //it matches
     return 1;
   }
   return 0;  
@@ -217,23 +217,14 @@ void lock(void){
   digitalWrite(arduinoLEDPin, LOW);
   digitalWrite(relayPin, HIGH); //set Relay to HIGH = lock
 }
-/*  //read the state of the pushbutton
-  buttonState = digitalRead(buttonPin);
-  if (buttonState == 0){
-    digitalWrite(ledPin, HIGH);
-    Serial.println(buttonState);
-  }
-  else {
-    digitalWrite(ledPin, LOW);
-  }
-  
-  delay(10);
-*/
-/*
-  float weight;
-  weight = scale.get_units(); //in lbs
-  Serial.println(weight, 2);
-*/
+
+void readWeights(void){
+  weightOne = scaleOne.get_units(); //in lbs
+  //weightTwo = scaleTwo.get_units();
+  //weightThree = scaleThree.get_units();
+  //weightFour = scaleFour.get_units();
+  //weightFive = scaleFive.get_units();
+}
  
 
 
