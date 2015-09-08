@@ -23,6 +23,7 @@ typedef enum { FIRSTSTATE,
 #define calibration_factor 210000.0 //This value is obtained using the SparkFun_HX711_Calibration sketch
 #define DOUT 3 //Define pin number for DOUT of weight sensor
 #define CLK 2  //Define pin number for CLK of weight sensor
+#define holdTime 700 // ms hold period: how long to wait for press+hold event
 
 const int buttonPin = 7;
 const int ledPin = 6;
@@ -35,6 +36,9 @@ int lastButtonState = 0;
 unsigned long ledPrevMillis = 0;
 unsigned long buttonPrevMillis = 0;
 float targetWeight = 0;
+int matchingVal = 0;
+int lastMatchingVal = 0;
+unsigned long matchingTime;
 
 HX711 scale(DOUT, CLK);
 STATE_t myState; //Current state
@@ -104,7 +108,8 @@ void loop() {
       Serial.print("\t");
       Serial.println(weight);
       //if (~isMatching(weight, targetWeight)){
-      if (((weight - targetWeight) > 0.2)||((targetWeight - weight) > 0.2)){
+      if (!isMatching(weight, targetWeight)){
+      //if (((weight - targetWeight) > 0.2)||((targetWeight - weight) > 0.2)){
         myState = WAITINGFORPROPERWEIGHT;
       }
       break;
@@ -117,11 +122,18 @@ void loop() {
       Serial.print(targetWeight);
       Serial.print("\t");
       Serial.println(weight);      
-      if (isMatching(weight, targetWeight)){
-      //if (((weight - targetWeight) < 0.2)||((targetWeight - weight) < 0.2)){
-      //if (abs(weight-targetWeight) < 0.2){  
+      //if (isMatching(weight, targetWeight)){
+      //  myState = UNLOCK;
+      //}
+      matchingVal = isMatching(weight, targetWeight);
+      if (matchingVal == 1 && lastMatchingVal == 0){
+        matchingTime = millis();
+      }
+
+      if (matchingVal == 1 && lastMatchingVal == 1 && (millis() - matchingTime) > long(holdTime)){
         myState = UNLOCK;
       }
+      lastMatchingVal = matchingVal;
       break;
 
     case UNLOCK:
@@ -132,22 +144,25 @@ void loop() {
       Serial.print(targetWeight);
       Serial.print("\t");
       Serial.println(weight);      
-      if (!isMatching(weight, targetWeight)){
-      //if (0){
-      //if (((weight - targetWeight) > 0.2)||((targetWeight - weight) > 0.2)){
-      //if (abs(weight-targetWeight) > 0.2){  
+      //if (!isMatching(weight, targetWeight)){
+      //  myState = WAITINGFORPROPERWEIGHT;
+      //}
+      matchingVal = isMatching(weight, targetWeight);
+      if (matchingVal == 0 && lastMatchingVal == 1){
+        matchingTime = millis();
+      }
+
+      if (matchingVal == 0 && lastMatchingVal == 0 && (millis() - matchingTime) > long(holdTime)){
         myState = WAITINGFORPROPERWEIGHT;
       }
+      lastMatchingVal = matchingVal;      
       break;
   }
   
 }
 
 int isMatching(float weight, float targetWeight){
-  //if (weight == targetWeight) {
-  //Serial.print(targetWeight);
-  //Serial.print("\t");
-  //Serial.println(weight);
+  unsigned long currentMillis = millis();
   if (abs(weight-targetWeight) < 0.02){  //it matches
     return 1;
   }
