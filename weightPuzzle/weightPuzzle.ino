@@ -5,6 +5,9 @@
 //Sun, 8/30. 1hr - set up test setup
 //Tues, 9/1. 1hr- Solder pins on HX711 and crimp pins to wire
 //Thur, 9/3. 1hr - program state machine and debug
+//Sat, 9/13. 2hr - mechanical prep
+//Sat, 9/20. 5hr - soldering. 2hr on Friday, 3hr Saturday
+
 //Port Manipulation: https://www.arduino.cc/en/Reference/PortManipulation
 //B (digital pin 8 to 13)
 //C (analog input pins)
@@ -21,7 +24,7 @@ typedef enum { FIRSTSTATE,
                UNLOCK
 } STATE_t;
 
-#define calibration_factor 210000.0 //This value is obtained using the SparkFun_HX711_Calibration sketch
+#define calibration_factor 108000.0 //This value is obtained using the SparkFun_HX711_Calibration sketch
 #define DOUT_ONE 3 //Define pin number for DOUT of weight sensor
 #define CLK_ONE 2  //Define pin number for CLK of weight sensor
 #define holdTime 700 // ms hold period: how long to wait for press+hold event
@@ -68,7 +71,7 @@ void loop() {
   unsigned long currentMillis;
   
   dummyState = myState; 
-
+  
   switch (dummyState){
     case FIRSTSTATE:
       //Read the state of the pushbutton
@@ -180,6 +183,7 @@ void loop() {
       lastMatchingVal = matchingVal;      
       break;
   }
+
   
 }
 
