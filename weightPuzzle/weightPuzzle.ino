@@ -24,14 +24,18 @@ typedef enum { FIRSTSTATE,
                UNLOCK
 } STATE_t;
 
-#define calibration_factor 108000.0 //This value is obtained using the SparkFun_HX711_Calibration sketch
-#define DOUT_ONE 3 //Define pin number for DOUT of weight sensor
-#define CLK_ONE 2  //Define pin number for CLK of weight sensor
+#define calibration_factor_one 108000.0 //This value is obtained using the SparkFun_HX711_Calibration sketch
+#define DOUT_ONE 5 //Define pin number for DOUT of weight sensor
+#define CLK_ONE 4  //Define pin number for CLK of weight sensor
+#define calibration_factor_two 108000.0 //This value is obtained using the SparkFun_HX711_Calibration sketch
+#define DOUT_TWO 7 //Define pin number for DOUT of weight sensor
+#define CLK_TWO 6 //Define pin number for CLK of weight sensor
+
 #define holdTime 700 // ms hold period: how long to wait for press+hold event
 
-const int buttonPin = 7;
-const int ledPin = 6;
-const int relayPin = A0;
+const int buttonPin = 3;
+const int ledPin = 2;
+const int relayPin = A5;
 const int arduinoLEDPin = 13;
 const unsigned long ledIntervalMs = 500;
 
@@ -40,13 +44,18 @@ int currentButtonState = 0;
 int lastButtonState = 0;
 unsigned long ledPrevMillis = 0;
 unsigned long buttonPrevMillis = 0;
+
 float targetWeightOne = 0;
 float weightOne;
+float targetWeightTwo = 0;
+float weightTwo;
 int matchingVal = 0;
 int lastMatchingVal = 0;
 unsigned long matchingTime;
 
 HX711 scaleOne(DOUT_ONE, CLK_ONE);
+HX711 scaleTwo(DOUT_TWO, CLK_TWO);
+
 STATE_t myState; //Current state
 STATE_t dummyState; //Used to prevent switching states within one while loop iteration
 
@@ -62,8 +71,11 @@ void setup() {
 
   //Read the state of the last pushbutton
   lastButtonState = digitalRead(buttonPin);
-  scaleOne.set_scale(calibration_factor); //This value is obtained by using the SparkFun_HX711_Calibration sketch
+  scaleOne.set_scale(calibration_factor_one); //This value is obtained by using the SparkFun_HX711_Calibration sketch
   scaleOne.tare(); //Assuming there is no weight on the scale at start up, reset the scale to 0
+  scaleTwo.set_scale(calibration_factor_two); //This value is obtained by using the SparkFun_HX711_Calibration sketch
+  scaleTwo.tare(); //Assuming there is no weight on the scale at start up, reset the scale to 0
+
   myState = FIRSTSTATE;
 }
 
@@ -78,6 +90,8 @@ void loop() {
       currentButtonState = digitalRead(buttonPin);  
       Serial.print(scaleOne.get_offset());
       Serial.print("\t");
+      Serial.print(scaleTwo.get_offset());
+      Serial.print("\t");
       Serial.println(currentButtonState);
       if ((currentButtonState) == 0 && (lastButtonState == 1)){ //Falling edge. When pressed, buttonState = 0
         myState = SETTARGETWEIGHT;
@@ -91,10 +105,15 @@ void loop() {
       currentMillis = millis();
       if (currentMillis - ledPrevMillis >= ledIntervalMs){
         ledPrevMillis = currentMillis;
-        DDRD ^= B01000000; //Toggle ledPin
+        DDRD ^= B00000100; //Toggle ledPin
       }
       targetWeightOne = scaleOne.get_units(); //in lbs
-      Serial.println(targetWeightOne, 2);
+      targetWeightTwo = scaleTwo.get_units(); //in lbs
+
+      Serial.print(targetWeightOne, 2);
+      Serial.print("\t");
+      Serial.println(targetWeightTwo, 2);
+
       currentButtonState = digitalRead(buttonPin); 
 
       //Wait before reading button again
@@ -113,7 +132,12 @@ void loop() {
       readWeights();
       Serial.print(targetWeightOne);
       Serial.print("\t");
-      Serial.println(weightOne);
+      Serial.print(weightOne);
+      Serial.print("\t");
+      Serial.print(targetWeightTwo);
+      Serial.print("\t");
+      Serial.println(weightTwo);
+
       //if (~isMatching(weight, targetWeight)){
       //if (((weight - targetWeight) > 0.2)||((targetWeight - weight) > 0.2)){
       //if (!isMatching(weight, targetWeight)){
@@ -122,7 +146,7 @@ void loop() {
 
       //Check to make sure weight does not match targetWeight for the holdTime
       //If so, go to WAITINGFORPROPERWEIGHT state
-      matchingVal = isMatching(weightOne, targetWeightOne);
+      matchingVal = isMatching(weightOne, targetWeightOne, weightTwo, targetWeightTwo);
       if (matchingVal == 0 && lastMatchingVal == 1){
         matchingTime = millis();
       }
@@ -142,13 +166,18 @@ void loop() {
       readWeights();
       Serial.print(targetWeightOne);
       Serial.print("\t");
-      Serial.println(weightOne);      
+      Serial.print(weightOne);      
+      Serial.print("\t");
+      Serial.print(targetWeightTwo);
+      Serial.print("\t");
+      Serial.println(weightTwo);      
+
       //if (isMatching(weight, targetWeight)){
       //  myState = UNLOCK;
       //}
       //Check to make sure weight matches targetWeight for the holdTime
       //If so, UNLOCK 
-      matchingVal = isMatching(weightOne, targetWeightOne);
+      matchingVal = isMatching(weightOne, targetWeightOne, weightTwo, targetWeightTwo);
       if (matchingVal == 1 && lastMatchingVal == 0){
         matchingTime = millis();
       }
@@ -166,13 +195,19 @@ void loop() {
       readWeights();
       Serial.print(targetWeightOne);
       Serial.print("\t");
-      Serial.println(weightOne);      
+      Serial.print(weightOne);      
+      Serial.print("\t");
+      Serial.print(targetWeightTwo);
+      Serial.print("\t");
+      Serial.print(weightTwo);      
+      Serial.println("\t");
+
       //if (!isMatching(weight, targetWeight)){
       //  myState = WAITINGFORPROPERWEIGHT;
       //}
       //Check to make sure weight does not match targetWeight for the holdTime. 
       //If so, go to WAITINGFORPROPERWEIGHT state
-      matchingVal = isMatching(weightOne, targetWeightOne);
+      matchingVal = isMatching(weightOne, targetWeightOne, weightTwo, targetWeightTwo);
       if (matchingVal == 0 && lastMatchingVal == 1){
         matchingTime = millis();
       }
@@ -187,8 +222,8 @@ void loop() {
   
 }
 
-int isMatching(float weightOne, float targetWeightOne){
-  if (abs(weightOne-targetWeightOne) < 0.02){  //it matches
+int isMatching(float weightOne, float targetWeightOne, float weightTwo, float targetWeightTwo){
+  if ((abs(weightOne-targetWeightOne) < 0.02) && (abs(weightTwo-targetWeightTwo) < 0.02)){  //it matches
     return 1;
   }
   return 0;  
@@ -224,7 +259,7 @@ void lock(void){
 
 void readWeights(void){
   weightOne = scaleOne.get_units(); //in lbs
-  //weightTwo = scaleTwo.get_units();
+  weightTwo = scaleTwo.get_units();
   //weightThree = scaleThree.get_units();
   //weightFour = scaleFour.get_units();
   //weightFive = scaleFive.get_units();
