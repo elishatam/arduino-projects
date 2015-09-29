@@ -34,8 +34,6 @@ typedef enum { INITIALIZATIONSTATE,
 
 
 CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);        // 10 megohm resistor between pins 4 & 2, pin 2 is sensor pin, add wire, foil
-//CapacitiveSensor   cs_4_5 = CapacitiveSensor(4,5);        // 10 megohm resistor between pins 4 & 6, pin 6 is sensor pin, add wire, foil
-//CapacitiveSensor   cs_4_8 = CapacitiveSensor(4,8);        // 10 megohm resistor between pins 4 & 8, pin 8 is sensor pin, add wire, foil
 int relayPin = 7;
 int ledPin = 13;
 unsigned long keyPrevMillis = 0;
@@ -73,26 +71,24 @@ void setup()
    cs_4_2.set_CS_AutocaL_Millis(0xFFFFFFFF);     // turn off autocalibrate on channel 1 - just as an example
    Serial.begin(9600);
    lock();
-   //digitalWrite(relayPin, HIGH); //set Relay to initially HIGH = lock
    myState = INITIALIZATIONSTATE;
 
 }
 
-// called when button is kept pressed for less than 2 seconds
 void lock() {
     Serial.println("Locked");
     digitalWrite(relayPin, HIGH); //make sure relay is high = lock
     digitalWrite(ledPin, HIGH);
 }
 
-// called when button is kept pressed for more than 2 seconds
+// called when touched for >10seconds
 void unlock() {
     Serial.println("Unlocked the lock");
     digitalWrite(relayPin, LOW); //set Relay to low to unlock and disconnect Relay
     digitalWrite(ledPin, LOW);
 }
 
-// called when key goes from not pressed to pressed
+// called when state goes from not touched to touched
 void beginTouch() {
     Serial.print("Begin Touch");
     longKeyPressCount = 0;
@@ -116,7 +112,7 @@ void loop() {
             Serial.print("INIT");
             Serial.print("\t");
             total = total - firstReadings[index];
-            firstReadings[index] = cs_4_2.capacitiveSensor(30); //read Key state
+            firstReadings[index] = cs_4_2.capacitiveSensor(30); //read sensor
             Serial.print(firstReadings[index]);
             total = total + firstReadings[index];
             index = index + 1;
@@ -126,8 +122,6 @@ void loop() {
             
             average = total / numReadings;
             initializationPeriod++;
-            //firstTimeToRead = 0;
-            //triggerAmount = average + triggerCapacitanceAmount;
             Serial.print("\t");
             Serial.println(average);
         }
@@ -141,7 +135,7 @@ void loop() {
         //Our triggerAmount will just be triggerCapacitanceAmount (50) above the average reading 
         //If capacitive reading got above this triggerAmount, then we assume someone is touching the sensor     
         triggerAmount = average + triggerCapacitanceAmount;
-        long currKeyState = cs_4_2.capacitiveSensor(30); //read Key state
+        long currKeyState = cs_4_2.capacitiveSensor(30); //read sensor state
         if ((prevKeyState < triggerAmount) && (currKeyState > triggerAmount)){
           beginTouch(); //Relative measurement. Capacitance amount has to be > prevKeyState by triggerCapacitiveAmount in order to trigger.
         }
@@ -149,7 +143,6 @@ void loop() {
           longKeyPressCount++;
         }
         if (longKeyPressCount >= longKeyPressCountMax){
-          //longKeyPress(); //Unlock
           myState = UNLOCK;
           unlockPrevMillis = millis();
           longKeyPressCount = 0;
@@ -163,16 +156,16 @@ void loop() {
         Serial.print(triggerAmount);
         Serial.print("\t");
         Serial.print(longKeyPressCount);
-        Serial.print("\t");                    // tab character for debug window spacing
+        Serial.print("\t");                 
         Serial.println(currKeyState); 
         break;
      }
      case UNLOCK:{
         Serial.print("UNLOCK");
         Serial.print("\t");
-        unlock();  //unlock
+        unlock(); 
         if (millis() - unlockPrevMillis >= 10000){
-          lock(); //lock
+          lock(); 
           myState = WAITINGFORTOUCH;
           unlockPrevMillis = millis();
         }
@@ -182,143 +175,4 @@ void loop() {
   }
 }
 
-/*
-void keyRelease(){
-    Serial.println("key release");
-    
-    if (longKeyPressCount >= longKeyPressCountMax){
-      longKeyPress();
-    }
-    else {
-      shortKeyPress();
-    }
-  
-}
-*/
-
-    /*
-    //Check capacitive sensor every 100ms (keySampleIntervalMs)
-    if (millis() - keyPrevMillis >= keySampleIntervalMs){
-      keyPrevMillis = millis();
-      PORTB ^= B00100000; //Toggle LED to test Only toggles Bit 5 
-      
-      //Get average first reading during initialization time
-      //Initialization time = 10s (100 * 100ms = 10,000ms = 10s)
-      if (initializationPeriod < 100){
-        total = total - firstReadings[index];
-          firstReadings[index] = cs_4_2.capacitiveSensor(30); //read Key state
-          Serial.print(firstReadings[index]);
-          total = total + firstReadings[index];
-          index = index + 1;
-          
-          if (index >= numReadings)
-            index = 0;
-            
-          average = total / numReadings;
-          initializationPeriod++;
-          //firstTimeToRead = 0;
-          //triggerAmount = average + triggerCapacitanceAmount;
-          Serial.print("\t");
-          Serial.println(average);
-      }
-      //Now we know the average first reading. 
-      //Our triggerAmount will just be triggerCapacitanceAmount (100) above the average reading 
-      //If capacitive reading got above this triggerAmount, then we assume someone is touching the sensor     
-      else {
-        triggerAmount = average + triggerCapacitanceAmount;
-        long currKeyState = cs_4_2.capacitiveSensor(30); //read Key state
-        if ((prevKeyState < triggerAmount) && (currKeyState > triggerAmount)){
-          keyPress(); //Relative measurement. Capacitance amount has to be > prevKeyState by triggerCapacitiveAmount in order to trigger.
-        }
-        //else if ((prevKeyState > triggerAmount) && (currKeyState < triggerAmount)){
-        //  keyRelease();
-        //}
-        else if (currKeyState > triggerAmount){
-          longKeyPressCount++;
-        }
-        if (longKeyPressCount >= longKeyPressCountMax){
-          longKeyPress(); //Unlock
-        }
-        
-        prevKeyState = currKeyState;
-        Serial.print(average);
-        Serial.print("\t");
-        Serial.print(triggerAmount);
-        Serial.print("\t");
-        Serial.print(longKeyPressCount);
-        Serial.print("\t");                    // tab character for debug window spacing
-        Serial.println(currKeyState);                    
-
-      }
-      
-      
-    }
-    */  
-/*      
-      long start = millis();
-      long total1 = cs_4_2.capacitiveSensor(30);
-      
-      if (total1 > 200){
-        digitalWrite(relayPin, HIGH); //connect Relay
-      }
-      else digitalWrite(relayPin, LOW);
-    Serial.print(millis() - start);        // check on performance in milliseconds
-    Serial.print("\t");                    // tab character for debug window spacing
-
-    Serial.println(total1);                  // print sensor output 1
- /*
-    }
-    
-    /*
-    Capacitive sensor turns on relay when signal is high. Blocking code, delay for 100ms
-    long start = millis();
-    long total1 =  cs_4_2.capacitiveSensor(30);
-    //long total2 =  cs_4_5.capacitiveSensor(30);
-    //long total3 =  cs_4_8.capacitiveSensor(30);
-
-    if (total1 > 200){
-      digitalWrite(relayPin, HIGH); //connect Relay
-    }
-    else digitalWrite(relayPin, LOW);
-    
-    Serial.print(millis() - start);        // check on performance in milliseconds
-    Serial.print("\t");                    // tab character for debug window spacing
-
-    Serial.println(total1);                  // print sensor output 1
-    //Serial.print("\t");
-    //Serial.print(total2);                  // print sensor output 2
-    //Serial.print("\t");
-    //Serial.println(total3);                // print sensor output 3
-
-    delay(100);                             // arbitrary delay to limit data to serial port 
-   */
-   
-   
-   /*
-   //Test Relay Pin
-   digitalWrite(relayPin, HIGH);
-   Serial.println("hi");
-   delay(1000);
-   digitalWrite(relayPin, LOW);
-   Serial.println("low");
-   delay(1000);
-   */
-//}
-
-
-/*Port Manipulation
-https://www.arduino.cc/en/Reference/PortManipulation
-//NOTES
-//0000,     0000
-//7 6 13 12, 11 10 9 8
-DDRB = DDRB | B00100000; //Set Arduino pin 13 (LED) to output, rest to input
-void loop() {
-  PORTB = PORTB | B00100000; //Sets digital pin 13 high
-//  digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(100);               // wait for a second
-//  digitalWrite(led, LOW);    // turn the LED off by making the voltage LOW
-  PORTB &= ~B00100000; //Sets digital pin 13 low
-  delay(100);               // wait for a second
-}   
-   */
 
