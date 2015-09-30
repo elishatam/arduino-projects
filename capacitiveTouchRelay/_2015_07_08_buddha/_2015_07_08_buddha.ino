@@ -1,12 +1,10 @@
-#include <CapacitiveSensor.h>
+#include "CapacitiveSensorFile.h"
 
-#include <CapacitiveSensor.h>
 /*Elisha's time spent:
  - 3 hrs researching different sensors - capacitive, pressure,
  - 4 hrs trying to get wireless way to activate capacitive sensor
  - 1 hr soldering and figuring
  - 1hr - timing, non blocking code
- - 4:12
 */
 
 /*
@@ -36,13 +34,13 @@ typedef enum { INITIALIZATIONSTATE,
 CapacitiveSensor   cs_4_2 = CapacitiveSensor(4,2);        // 10 megohm resistor between pins 4 & 2, pin 2 is sensor pin, add wire, foil
 int relayPin = 7;
 int ledPin = 13;
-unsigned long keyPrevMillis = 0;
+unsigned long touchPrevMillis = 0;
 unsigned long unlockPrevMillis = 0;
-const unsigned long keySampleIntervalMs = 100;
+const unsigned long touchSampleIntervalMs = 100;
 const unsigned long triggerCapacitanceAmount = 50;
 unsigned int triggerAmount;
-byte longKeyPressCountMax = 100;    // 100 (longkeyPressCountMax) * 100 (loops every 100ms) = 10,000ms
-byte longKeyPressCount = 0;
+byte touchCountMax = 100;    // 100 (touchCountMax) * 100 (loops every 100ms) = 10,000ms
+byte touchCount = 0;
 
 //Smoothing tutorial https://www.arduino.cc/en/Tutorial/Smoothing
 const int numReadings = 100;
@@ -53,7 +51,7 @@ unsigned int average = 0;
 unsigned int initializationPeriod = 0;
 
 
-unsigned int prevKeyState = 0; //to start off, capacitive sensor state is 0, <200.
+unsigned int prevTouchState = 0; //to start off, capacitive sensor state is 0, <200.
 
 STATE_t myState; //Current state
 STATE_t dummyState; //Used to prevent switching states within one while loop iteration
@@ -91,7 +89,7 @@ void unlock() {
 // called when state goes from not touched to touched
 void beginTouch() {
     Serial.print("Begin Touch");
-    longKeyPressCount = 0;
+    touchCount = 0;
 }
 
 
@@ -100,9 +98,9 @@ void loop() {
   currentMillis = millis();
   dummyState = myState;
   
-  //Check capacitive sensor every 100ms (keySampleIntervalMs)
-  if (currentMillis - keyPrevMillis >= keySampleIntervalMs){
-    keyPrevMillis = currentMillis;
+  //Check capacitive sensor every 100ms (touchSampleIntervalMs)
+  if (currentMillis - touchPrevMillis >= touchSampleIntervalMs){
+    touchPrevMillis = currentMillis;
 
     switch (dummyState){
       case INITIALIZATIONSTATE:{
@@ -135,29 +133,29 @@ void loop() {
         //Our triggerAmount will just be triggerCapacitanceAmount (50) above the average reading 
         //If capacitive reading got above this triggerAmount, then we assume someone is touching the sensor     
         triggerAmount = average + triggerCapacitanceAmount;
-        long currKeyState = cs_4_2.capacitiveSensor(30); //read sensor state
-        if ((prevKeyState < triggerAmount) && (currKeyState > triggerAmount)){
-          beginTouch(); //Relative measurement. Capacitance amount has to be > prevKeyState by triggerCapacitiveAmount in order to trigger.
+        long currTouchState = cs_4_2.capacitiveSensor(30); //read sensor state
+        if ((prevTouchState < triggerAmount) && (currTouchState > triggerAmount)){
+          beginTouch(); //Relative measurement. Capacitance amount has to be > prevTouchState by triggerCapacitiveAmount in order to trigger.
         }
-        else if (currKeyState > triggerAmount){
-          longKeyPressCount++;
+        else if (currTouchState > triggerAmount){
+          touchCount++;
         }
-        if (longKeyPressCount >= longKeyPressCountMax){
+        if (touchCount >= touchCountMax){
           myState = UNLOCK;
           unlockPrevMillis = millis();
-          longKeyPressCount = 0;
+          touchCount = 0;
         }
         
-        prevKeyState = currKeyState;
+        prevTouchState = currTouchState;
         Serial.print("WAITINGFORTOUCH");
         Serial.print("\t");
         Serial.print(average);
         Serial.print("\t");
         Serial.print(triggerAmount);
         Serial.print("\t");
-        Serial.print(longKeyPressCount);
+        Serial.print(touchCount);
         Serial.print("\t");                 
-        Serial.println(currKeyState); 
+        Serial.println(currTouchState); 
         break;
      }
      case UNLOCK:{
