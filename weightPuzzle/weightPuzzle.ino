@@ -40,8 +40,8 @@ typedef enum { FIRSTSTATE,
 #define DOUT_FIVE A4 //Define pin number for DOUT of weight sensor
 #define CLK_FIVE A5 //Define pin number for CLK of weight sensor
 
-
 #define holdTime 200 // ms hold period: how long to wait for press+hold event
+#define matchingRange 0.03
 
 const int buttonPin = 3;
 const int ledPin = 4;
@@ -76,7 +76,6 @@ HX711 scaleFour(DOUT_FOUR, CLK_FOUR);
 HX711 scaleFive(DOUT_FIVE, CLK_FIVE);
 
 STATE_t myState; //Current state
-STATE_t dummyState; //Used to prevent switching states within one while loop iteration
 
 void setup() {
   pinMode(buttonPin, INPUT);
@@ -106,12 +105,12 @@ void setup() {
 }
 
 void loop() {
-  unsigned long currentMillis;
-  
-  dummyState = myState; 
+  unsigned long currentMillis = millis();
+  STATE_t dummyState = myState; //Used to prevent switching states within one while loop iteration
   
   switch (dummyState){
     case FIRSTSTATE:
+      digitalWrite(ledPin, HIGH);
       //Read the state of the pushbutton
       currentButtonState = digitalRead(buttonPin);  
       Serial.print(scaleOne.get_offset());
@@ -133,12 +132,11 @@ void loop() {
       break;
 
     case SETTARGETWEIGHT:
-      digitalWrite(ledPin, HIGH);
-      currentMillis = millis();
+      //digitalWrite(ledPin, HIGH);
+      //currentMillis = millis();
       if (currentMillis - ledPrevMillis >= ledIntervalMs){
         ledPrevMillis = currentMillis;
-        DDRD ^= B00010000; //Toggle ledPin
-        //DDRB ^= B00000001;
+        toggleLED();
       }
       targetWeightOne = scaleOne.get_units(); //in lbs
       targetWeightTwo = scaleTwo.get_units(); //in lbs
@@ -169,29 +167,12 @@ void loop() {
       break;
 
     case WAITINGFORWEIGHTREMOVAL:
+      digitalWrite(ledPin, LOW);
       Serial.print("WAITINGFORWEIGHTREMOVAL");
       Serial.print("\t");
       digitalWrite(ledPin, LOW); //Make sure LED is off
       readWeights();
-      Serial.print(targetWeightOne);
-      Serial.print("\t");
-      Serial.print(weightOne);
-      Serial.print("\t");
-      Serial.print(targetWeightTwo);
-      Serial.print("\t");
-      Serial.print(weightTwo);
-      Serial.print("\t");
-      Serial.print(targetWeightThree);
-      Serial.print("\t");
-      Serial.print(weightThree);
-      Serial.print("\t");
-      Serial.print(targetWeightFour);
-      Serial.print("\t");
-      Serial.print(weightFour);
-      Serial.print("\t");
-      Serial.print(targetWeightFive);
-      Serial.print("\t");
-      Serial.println(weightFive);
+      printWeights();
 
 
       //Check to make sure weight does not match targetWeight for the holdTime
@@ -210,29 +191,12 @@ void loop() {
       break;
 
     case WAITINGFORPROPERWEIGHT:
+      digitalWrite(ledPin, HIGH);
       Serial.print("WAITINGFORPROPERWEIGHT");
       Serial.print("\t");
       lock();
       readWeights();
-      Serial.print(targetWeightOne);
-      Serial.print("\t");
-      Serial.print(weightOne);      
-      Serial.print("\t");
-      Serial.print(targetWeightTwo);
-      Serial.print("\t");
-      Serial.print(weightTwo);      
-      Serial.print("\t");
-      Serial.print(targetWeightThree);
-      Serial.print("\t");
-      Serial.print(weightThree);
-      Serial.print("\t");
-      Serial.print(targetWeightFour);
-      Serial.print("\t");
-      Serial.print(weightFour);
-      Serial.print("\t");
-      Serial.print(targetWeightFive);
-      Serial.print("\t");
-      Serial.println(weightFive);
+      printWeights();
       
       //if (isMatching(weight, targetWeight)){
       //  myState = UNLOCK;
@@ -255,25 +219,7 @@ void loop() {
       Serial.print("\t");
       unlock();
       readWeights();
-      Serial.print(targetWeightOne);
-      Serial.print("\t");
-      Serial.print(weightOne);      
-      Serial.print("\t");
-      Serial.print(targetWeightTwo);
-      Serial.print("\t");
-      Serial.print(weightTwo);
-      Serial.print("\t");
-      Serial.print(targetWeightThree);
-      Serial.print("\t");
-      Serial.print(weightThree);
-      Serial.print("\t");
-      Serial.print(targetWeightFour);
-      Serial.print("\t");
-      Serial.print(weightFour);
-      Serial.print("\t");
-      Serial.print(targetWeightFive);
-      Serial.print("\t");
-      Serial.println(weightFive);
+      printWeights();
       
       //if (!isMatching(weight, targetWeight)){
       //  myState = WAITINGFORPROPERWEIGHT;
@@ -296,29 +242,17 @@ void loop() {
 }
 
 int isMatching(float weightOne, float targetWeightOne, float weightTwo, float targetWeightTwo, float weightThree, float targetWeightThree, float weightFour, float targetWeightFour, float weightFive, float targetWeightFive){
-  if ((abs(weightOne-targetWeightOne) < 0.02) && (abs(weightTwo-targetWeightTwo) < 0.02) && (abs(weightThree-targetWeightThree) < 0.02) && (abs(weightFour-targetWeightFour) < 0.02) && (abs(weightFive-targetWeightFive) < 0.02)){  //it matches
+  if ((abs(weightOne-targetWeightOne) < matchingRange) && (abs(weightTwo-targetWeightTwo) < matchingRange) && (abs(weightThree-targetWeightThree) < matchingRange) && (abs(weightFour-targetWeightFour) < matchingRange) && (abs(weightFive-targetWeightFive) < matchingRange)){  //it matches
     return 1;
   }
   return 0;  
 }
 
-/*
-int isMatchingForEnoughTime(float weight, float targetWeight){
-  if (abs(weight-targetWeight) < 0.02){  //it matches
-    matchingVal = 1;
-  }
-  else matchingVal = 0;
+void toggleLED(void){
+  DDRD ^= B00010000; //Toggle ledPin
+  //DDRB ^= B00000001;
   
-  if (matchingVal == 1 && lastMatchingVal == !matchingVal){
-    matchingTime = millis();
-  }
-
-  if (matchingVal == 1 && lastMatchingVal == matchingVal && (millis() - matchingTime) > long(holdTime)){
-    myState = UNLOCK;
-  }
-  lastMatchingVal = matchingVal;
 }
-*/
 
 void unlock(void){
   digitalWrite(arduinoLEDPin, HIGH);
@@ -337,6 +271,28 @@ void readWeights(void){
   weightFour = scaleFour.get_units();
   weightFive = scaleFive.get_units();
 }
- 
+
+void printWeights(void){
+  Serial.print(targetWeightOne);
+  Serial.print("\t");
+  Serial.print(weightOne);      
+  Serial.print("\t");
+  Serial.print(targetWeightTwo);
+  Serial.print("\t");
+  Serial.print(weightTwo);
+  Serial.print("\t");
+  Serial.print(targetWeightThree);
+  Serial.print("\t");
+  Serial.print(weightThree);
+  Serial.print("\t");
+  Serial.print(targetWeightFour);
+  Serial.print("\t");
+  Serial.print(weightFour);
+  Serial.print("\t");
+  Serial.print(targetWeightFive);
+  Serial.print("\t");
+  Serial.println(weightFive);
+}
+
 
 
