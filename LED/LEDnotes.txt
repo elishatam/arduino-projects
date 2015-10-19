@@ -1,0 +1,15 @@
+Arduino digital output pin = 40mA
+https://www.arduino.cc/en/Tutorial/DigitalPins
+Want 20mA through LED for full brightness
+Calculation:
+R = V / I = 
+
+Resistor color code
+http://www.digikey.com/en/resources/conversion-calculators/conversion-calculator-resistor-color-code-4-band
+
+
+LED current flows from Anode (+) to Cathode (-)
+Cathode = short lead = flat side
+http://s1189.photobucket.com/user/zaxxond/media/led_zps7e2c9435.gif.html
+
+
