@@ -1,0 +1,36 @@
+style1 {
+	font-family: arial, sans-serif;
+	font-size: 0.9em;
+	text-align: justify;
+	line-height: 2em;
+	color: #000000; }
+
+body {
+	background-color: #000033;}
+
+
+table {
+	background-color: #ffffff;}
+td {
+	font-family: arial, sans-serif;
+	font-size: 0.9em;
+	line-height: 1.5em;
+	color: #000000;}
+
+    
+a:link {font-family: verdana; COLOR: #0066ff; TEXT-DECORATION: none; font-weight: bold}
+a:visited {font-family: verdana; COLOR: #3366ff; TEXT-DECORATION: none; font-weight: bold}
+a:hover {font-family: verdana; COLOR: #3399ff; TEXT-DECORATION: none; font-weight: bold}
+a:active {font-family: verdana; COLOR: #0033ff; TEXT-DECORATION: none; font-weight: bold}
+
+a.inside:link {font-family: verdana; COLOR: #cc0000; TEXT-DECORATION: none; font-weight: bold}
+a.inside:visited {font-family: verdana; COLOR: #cc0000; TEXT-DECORATION: none; font-weight: bold}
+a.inside:hover {font-family: verdana; COLOR: #ff3300; TEXT-DECORATION: none; font-weight: bold}
+a.inside:active {font-family: verdana; COLOR: #cc0000; TEXT-DECORATION: none; font-weight: bold}
+
+a.inside2:link {font-family: verdana; COLOR: #ffff66; TEXT-DECORATION: none; font-weight: bold}
+a.inside2:visited {font-family: verdana; COLOR: #ffcc00; TEXT-DECORATION: none; font-weight: bold}
+a.inside2:hover {font-family: verdana; COLOR: #ff9900; TEXT-DECORATION: none; font-weight: bold}
+a.inside2:active {font-family: verdana; COLOR: #ff3300; TEXT-DECORATION: none; font-weight: bold}
+
+.hiddenDiv {display:none;}

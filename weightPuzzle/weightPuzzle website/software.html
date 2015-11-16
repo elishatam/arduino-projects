@@ -1,0 +1,143 @@
+<html>
+<head>
+
+<title>Weight Puzzle, September 2015</title>
+
+<link rel="stylesheet" type="text/css" href="mystyles.css">
+
+
+</head>
+
+<body>
+<style1>
+<table width="1000" border="0" align="center" cellpadding="0" cellspacing="0" bordercolor="#cccccc" bgcolor="#ffffff">
+
+
+  <tr>
+
+    <td align="left" colspan=4>
+      <br>
+      <h1 style="color:#08298A">&nbsp&nbspEscape The Room: Weight Puzzle</h1>
+      <!--<img src="photos/Heading.jpg"> -->
+    </td>
+  </tr>
+  <tr>
+    <td colspan=4>
+	<hr>
+    </td>
+
+  </tr>
+
+  <tr>
+    <td align="center" font size="0.9em" colspan=4>
+	<a href="index.html">OVERVIEW</a>
+	 | <a href="hardware.html">HARDWARE</a>	
+	 | <a href="software.html">SOFTWARE</a>	
+
+
+<br>
+<br>
+    </td>
+  </tr>
+
+  <tr>
+    <td>
+
+<table width="1000" border="1" align="center" cellpadding="0" cellspacing="0" bordercolor="#cccccc" bgcolor="#ffffff">
+
+  <tr height="50">
+    <td width="100" align="center">
+
+    <b>Header Files</b>
+    </td>
+
+    <td width="100" align="center">
+    <b>Code Files</b>
+    </td>
+
+    <td width="100" align="center">
+    <b>Pseudocode</b>
+
+    </td>
+
+    <td width="300" align="center">
+    <b>Description</b>
+    </td>
+
+  <tr>
+    <td align="center" height="30">
+    </td>
+
+    <td align="center">
+	<a href="code/main.html">weightPuzzle.ino</a>
+    </td>
+
+    <td align="center">
+	<a href="photos/weightPuzzleStateDiagram.png">Main State Diagram</a>
+    </td>
+
+    <td>
+    	Initializes the GPIOs for the load sensors, relay, LED, and button.
+      <br>Tares the load sensors to start reading at 0 lbs.
+      <br>Allows the administrator to set the TargetWeights.
+      <br>During game play, it reads the different load sensors and determines when to unlock the magnetic lock.
+    </td>
+  </tr>
+  
+
+
+  
+  <tr>
+
+    <td align="center">
+	<a href="Code/HX711H.html">HX711.h</a>
+    </td>
+
+    <td align="center">
+	<a href="Code/HX711C.html">HX711.c</a>
+    </td>
+
+    <td align="center">
+
+    </td>
+
+    <td>
+
+This is github user Bogde's <a href="https://github.com/bogde/HX711">HX711 library</a> for the HX711. It is released under a GNU GENERAL PUBLIC LICENSE
+<br>
+The HX711 chip reads load cells very well. The Sparkfun breakout board is compatible with any wheatsone bridge based load cell.
+<br>
+The HX711 board can be powered from 2.7V to 5V
+
+
+    </td>
+  </tr>
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+</table>
+<br>
+<br>
+<br>
+</td>
+</tr>
+</table>
+
+</style1>
+
+
+</body>
+
+</html>
